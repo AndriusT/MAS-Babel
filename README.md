@@ -1,10 +1,17 @@
-<p align="center">
+<table>
+<tr>
+<td width="260" valign="top">
   <img src="assets/MAS-babel-logo.png" alt="MAS Topologies Designer logo" width="220">
-</p>
+</td>
+<td valign="top">
 
 # MAS Topologies Designer
 
 A multi-agent architecture design toolkit for machine learning. This repo helps you define dataset goals, build structured prompts for expert roles, and run topology-driven design pipelines that generate, review, and refine CNN model proposals.
+
+</td>
+</tr>
+</table>
 
 ## What this repo contains
 
