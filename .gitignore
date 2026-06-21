@@ -1,2 +1,4 @@
 examples/data/*
 !examples/data/.gitkeep
+logs/*
+examples/logs/*
