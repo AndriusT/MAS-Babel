@@ -7,29 +7,127 @@
 
 # MAS Topologies Designer
 
-A multi-agent architecture design toolkit for machine learning. This repo helps you define dataset goals, build structured prompts for expert roles, and run topology-driven design pipelines that generate, review, and refine CNN model proposals.
+MAS-Babel is a library of reusable multi-agent system (MAS) topologies for AI workflows. It helps you compose agent roles (designer, critic, adversary, judge, self-reflector), run topology-driven reasoning loops, and compare coordination patterns in a reproducible way.
 
 </td>
 </tr>
 </table>
 
-## What this repo contains
+## What Is MAS-Babel?
 
-- `src/`: core topology engine and task definitions
-- `examples/ml_architect_demo.ipynb`: interactive demo for CIFAR-10 architecture design
-- `examples/data/`: preserved placeholder directory for dataset caching without tracking large files
+MAS-Babel is a topology library for multi-agent AI orchestration.
 
-## Why use it
+In this context, a topology means how agents are organized and coordinated to solve a task. Examples include:
+- single expert baseline
+- designer plus critic iterative review
+- adversarial challenge loops
+- parallel experts with a coordinator or judge
+- self-reflection and revision
 
-Use this project to prototype ML model design with collaborative AI roles like architect, reviewer, adversary, judge, and self-reflection. It is especially useful when you want a reproducible workflow for generating code, hyperparameters, and architecture rationale.
+The goal is to collect, standardize, and benchmark commonly used MAS patterns so teams can test and reuse proven architectures instead of rebuilding orchestration logic from scratch.
 
-## Quick start
+## Why Use It?
 
-1. Install the package: `pip install -e .`
-2. Open `examples/ml_architect_demo.ipynb`
-3. Set your API key and run the demo cells
+- Reusable MAS patterns: switch topologies without rewriting task logic.
+- Clear role separation: prompts and responsibilities are explicit per agent role.
+- Reproducible experimentation: consistent interfaces, structured outputs, and logging.
+- Science-oriented by design: suitable for research and scientific pipelines, while remaining general enough for broader AI use cases.
 
-## Notes
+## Core Topologies
 
-- The repo preserves `examples/data/` in Git via a placeholder file while ignoring large dataset files
-- The notebook uses `TopologyAgent` and `PromptSet` to orchestrate multi-agent design flows
+Current built-in topologies include:
+
+- single: one-agent baseline for fast iteration.
+- peer_review: primary agent with critic feedback loops.
+- adversarial: primary agent with adversarial challenge loops.
+- parallel_ensemble: multiple experts in parallel, then judge synthesis.
+- self_reflection: one agent that critiques and revises its own output.
+
+## Repository Contents
+
+- src/mas_topologies/
+  Core library: topology dispatcher, prompt contracts, models, logging, and topology implementations.
+
+- src/mas_topologies/topologies/
+  Topology execution modules (single, peer review, adversarial, parallel ensemble, self reflection).
+
+- src/mas_topologies/tasks/ml_architect/
+  Task-specific wrapper for ML architecture design (context building and response parsing).
+
+- examples/ml_architect_demo.ipynb
+  Interactive notebook demo.
+
+- examples/self_reflection.ipynb
+  Example focused on self-reflection workflow.
+
+- examples/ml_architect_demo.py
+  Scripted demo runner for topology comparisons.
+
+- examples/data/
+  Placeholder directory for local dataset caching (large files not tracked).
+
+- tests/
+  Unit tests for agent dispatch, context, logging, and topology behavior.
+
+- assets/
+  Project images and branding assets.
+
+## Installation
+
+Requirements:
+- Python 3.10+
+
+Install in editable mode:
+
+    pip install -e .
+
+Optional development dependencies:
+
+    pip install -e ".[dev]"
+
+## Quick Start
+
+1. Set a model provider key (for example OPENAI_API_KEY or ANTHROPIC_API_KEY).
+2. Install the package.
+3. Run one of the demos:
+
+Notebook path:
+- examples/ml_architect_demo.ipynb
+
+Script path:
+- examples/ml_architect_demo.py
+
+Example command:
+
+    PYTHONPATH=src python examples/ml_architect_demo.py --topology single
+
+## Minimal Workflow
+
+1. Define role prompts with PromptSet.
+2. Create a TopologyAgent and choose a topology.
+3. Build task context (plain text or task-specific schema).
+4. Run the topology asynchronously.
+5. Parse the final response into your task output format.
+
+This separation keeps orchestration generic and task logic modular.
+
+## Scientific Applications
+
+MAS-Babel is designed to support scientific and research workflows where reliability, traceability, and iterative critique matter. Typical use cases include:
+- model and experiment design assistance
+- method comparison through structured debate
+- evidence synthesis across multiple expert agents
+- iterative proposal refinement with explicit review stages
+
+Although science is a primary target, the framework is domain-agnostic and can be adapted to many AI planning and generation tasks.
+
+## Roadmap
+
+- Expand the topology catalog to cover additional orchestration patterns.
+- Add comparative evaluation utilities across topologies.
+- Add more task templates beyond ML architecture design.
+- Improve docs and examples for domain-specific adaptation.
+
+## License
+
+MIT
