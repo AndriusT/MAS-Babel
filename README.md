@@ -7,7 +7,7 @@
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python versions](https://img.shields.io/pypi/pyversions/mas-topologies.svg)](https://pypi.org/project/mas-topologies/)
+[![Python versions](https://img.shields.io/badge/python-3.10%2C%203.11%2C%203.12-blue.svg)](https://www.python.org/)
 
 # MAS Topologies Designer
 
