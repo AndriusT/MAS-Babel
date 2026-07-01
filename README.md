@@ -5,6 +5,10 @@
 </td>
 <td valign="top">
 
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python versions](https://img.shields.io/pypi/pyversions/mas-topologies.svg)](https://pypi.org/project/mas-topologies/)
+
 # MAS Topologies Designer
 
 MAS-Babel is a library of reusable multi-agent system (MAS) topologies for AI workflows. It helps you compose agent roles (designer, critic, adversary, judge, self-reflector), run topology-driven reasoning loops, and compare coordination patterns in a reproducible way.
