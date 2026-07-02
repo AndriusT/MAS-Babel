@@ -9,43 +9,45 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python versions](https://img.shields.io/badge/python-3.10%2C%203.11%2C%203.12-blue.svg)](https://www.python.org/)
 
-# MAS Topologies Designer
+# MAS-Babel
 
-MAS-Babel is a library of reusable multi-agent system (MAS) topologies for AI workflows. It helps you compose agent roles (designer, critic, adversary, judge, self-reflector), run topology-driven reasoning loops, and compare coordination patterns in a reproducible way.
+Multi-agent system (MAS) Babel is a tool for designing multi-agent architectures and orchestration patterns (sometimes referred to as *topologies*) for scientific applications. It helps you compose agent roles (e.g., *designer*, *critic*, *adversary*, *judge*, *self-critic* etc.), run topology-driven reasoning loops, and compare coordination patterns in a reproducible way. The main goal of MAS-Babel is and AutoGen-powered library of widely used multi-agent architectures that can be tested, bechmarked, assembled into custom MAS pipelines for science applications.
 
 </td>
 </tr>
 </table>
 
-## What Is MAS-Babel?
+## Implemented MAS Architectures
 
-MAS-Babel is a topology library for multi-agent AI orchestration.
+Currently implemented:
 
-In this context, a topology means how agents are organized and coordinated to solve a task. Examples include:
-- single expert baseline
-- designer plus critic iterative review
-- adversarial challenge loops
-- parallel experts with a coordinator or judge
-- self-reflection and revision
+- **single**: a single agent baseline for testing.
+- **self_reflection**: a single agent that critiques and revises its own output.
+- **peer_review**: a two-agent system, where the *architect* generates an output and the *reviewer* provides feedback. 
+- **adversarial**: a two-agent system, where the *architect* generates an output, which is then challenged by an *ardversary* agent for N rounds until a satisfactory output is generated.
+- **parallel_ensemble**: multiple expert agents work in parallel, with the *judge* agent revieving and synthesising the final output.
 
-The goal is to collect, standardize, and benchmark commonly used MAS patterns so teams can test and reuse proven architectures instead of rebuilding orchestration logic from scratch.
+In progress: 
 
-## Why Use It?
+- **Planner-executor(s)**: a multi-agent system witha *planner* agent decompsing a task into subtasks with a single or multiple *executors* then executing the assigned tasks. 
+- **Agent ensemble**: multiple expert agents generate outputs with the final output chosen by majority vote.
+- *...*
 
-- Reusable MAS patterns: switch topologies without rewriting task logic.
-- Clear role separation: prompts and responsibilities are explicit per agent role.
-- Reproducible experimentation: consistent interfaces, structured outputs, and logging.
-- Science-oriented by design: suitable for research and scientific pipelines, while remaining general enough for broader AI use cases.
 
-## Core Topologies
+## Design Philosophy
 
-Current built-in topologies include:
+Instead of hardcoding a complex black-box MAS system that is difficult to debug and modify, MAS-Babel provides the minimal building blocks that the end users can integrate into their custom pipelines. 
 
-- single: one-agent baseline for fast iteration.
-- peer_review: primary agent with critic feedback loops.
-- adversarial: primary agent with adversarial challenge loops.
-- parallel_ensemble: multiple experts in parallel, then judge synthesis.
-- self_reflection: one agent that critiques and revises its own output.
+## Scientific Applications
+
+MAS-Babel is designed to support scientific and research workflows where reliability, traceability, and iterative critique matter. Typical use cases include:
+- model and experiment design assistance
+- method comparison through structured debate
+- evidence synthesis across multiple expert agents
+- iterative proposal refinement with explicit review stages
+
+Although science is a primary target, the framework is domain-agnostic and can be adapted to many AI planning and generation tasks.
+ 
 
 ## Repository Contents
 
@@ -91,9 +93,7 @@ Optional development dependencies:
 
 ## Quick Start
 
-1. Set a model provider key (for example OPENAI_API_KEY or ANTHROPIC_API_KEY).
-2. Install the package.
-3. Run one of the demos:
+Run one of the demos:
 
 Notebook path:
 - examples/ml_architect_demo.ipynb
@@ -101,29 +101,6 @@ Notebook path:
 Script path:
 - examples/ml_architect_demo.py
 
-Example command:
-
-    PYTHONPATH=src python examples/ml_architect_demo.py --topology single
-
-## Minimal Workflow
-
-1. Define role prompts with PromptSet.
-2. Create a TopologyAgent and choose a topology.
-3. Build task context (plain text or task-specific schema).
-4. Run the topology asynchronously.
-5. Parse the final response into your task output format.
-
-This separation keeps orchestration generic and task logic modular.
-
-## Scientific Applications
-
-MAS-Babel is designed to support scientific and research workflows where reliability, traceability, and iterative critique matter. Typical use cases include:
-- model and experiment design assistance
-- method comparison through structured debate
-- evidence synthesis across multiple expert agents
-- iterative proposal refinement with explicit review stages
-
-Although science is a primary target, the framework is domain-agnostic and can be adapted to many AI planning and generation tasks.
 
 ## Roadmap
 
