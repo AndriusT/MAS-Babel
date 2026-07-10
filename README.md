@@ -1,7 +1,7 @@
 <table>
 <tr>
-<td width="260" valign="top">
-  <img src="assets/MAS-babel-logo.png" alt="MAS Topologies Designer logo" width="220">
+<td width="240" valign="top">
+  <img src="assets/MAS-babel-logo.png" alt="MAS Topologies Designer logo" width="200">
 </td>
 <td valign="top">
 
