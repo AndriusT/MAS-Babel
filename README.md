@@ -11,7 +11,7 @@
 
 # MAS-Babel
 
-Multi-agent system (MAS) Babel is a tool for designing multi-agent architectures and orchestration patterns (sometimes referred to as *topologies*) for scientific applications. It helps you compose agent roles (e.g., *designer*, *critic*, *adversary*, *judge*, *self-critic* etc.), run topology-driven reasoning loops, and compare coordination patterns in a reproducible way. The main goal of MAS-Babel is and AutoGen-powered library of widely used multi-agent architectures that can be tested, bechmarked, assembled into custom MAS pipelines for science applications.
+Multi-agent system (MAS) Babel is a tool for designing multi-agent architectures and orchestration patterns (sometimes referred to as *topologies*) for scientific applications. It helps you compose agent roles (e.g., *designer*, *critic*, *adversary*, *judge*, *self-critic* etc.), run topology-driven reasoning loops, and compare coordination patterns in a reproducible way. The main goal of MAS-Babel is an AutoGen-powered library of widely used multi-agent architectures that can be tested, bechmarked and further assembled into custom MAS pipelines for science applications.
 
 </td>
 </tr>
@@ -36,47 +36,31 @@ In progress:
 
 ## Design Philosophy
 
-Instead of hardcoding a complex black-box MAS system that is difficult to debug and modify, MAS-Babel provides the minimal building blocks that the end users can integrate into their custom pipelines. 
+Instead of hardcoding complex black-box MAS systems that is difficult to debug and modify, MAS-Babel provides the minimal building blocks that the end users can integrate into their custom pipelines. 
 
 ## Scientific Applications
 
-MAS-Babel is designed to support scientific and research workflows where reliability, traceability, and iterative critique matter. Typical use cases include:
-- model and experiment design assistance
-- method comparison through structured debate
-- evidence synthesis across multiple expert agents
-- iterative proposal refinement with explicit review stages
+MAS-Babel is designed to support scientific and research workflows where reliability, traceability, and iterative feedback matter. Typical use cases include:
+- Scientific hypothesis formulation, data analysis, paper draft writing
+- Literature review with a feedback loop to avoid halucinated content, references, etc. 
+- Reproducing peer-reviewed research papers
+- Machine learning algorithm optimization (e.g., iteratively choosing an optimal CNN architecture)
 
-Although science is a primary target, the framework is domain-agnostic and can be adapted to many AI planning and generation tasks.
- 
 
 ## Repository Contents
 
-- src/mas_topologies/
-  Core library: topology dispatcher, prompt contracts, models, logging, and topology implementations.
-
 - src/mas_topologies/topologies/
-  Topology execution modules (single, peer review, adversarial, parallel ensemble, self reflection).
+  Core source code: multi-agent architecture (*topology*) implementation.
 
 - src/mas_topologies/tasks/ml_architect/
   Task-specific wrapper for ML architecture design (context building and response parsing).
 
-- examples/ml_architect_demo.ipynb
-  Interactive notebook demo.
-
-- examples/self_reflection.ipynb
-  Example focused on self-reflection workflow.
-
-- examples/ml_architect_demo.py
-  Scripted demo runner for topology comparisons.
-
-- examples/data/
-  Placeholder directory for local dataset caching (large files not tracked).
+- examples/
+  A number of example notebooks illustrating the core functionality of the library.
 
 - tests/
   Unit tests for agent dispatch, context, logging, and topology behavior.
 
-- assets/
-  Project images and branding assets.
 
 ## Installation
 
@@ -93,21 +77,17 @@ Optional development dependencies:
 
 ## Quick Start
 
-Run one of the demos:
+Run one of the demos at:
 
-Notebook path:
-- examples/ml_architect_demo.ipynb
-
-Script path:
-- examples/ml_architect_demo.py
+- examples/
 
 
 ## Roadmap
 
-- Expand the topology catalog to cover additional orchestration patterns.
-- Add comparative evaluation utilities across topologies.
-- Add more task templates beyond ML architecture design.
-- Improve docs and examples for domain-specific adaptation.
+- Expand the MAS architecture catalog to cover additional orchestration patterns (e.g., a planner agent + multiple executor agents).
+- Apply to scientific programming problem benchmarks, such as SciCode.
+- Apply to science problem benchmarks, e.g., TPBench (theoretical physics problems)
+- Apply to peer-reviewed paper reproduction benchmarks, e.g., Replicationbench.
 
 ## License
 
