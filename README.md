@@ -33,6 +33,13 @@ In progress:
 - **Agent ensemble**: multiple expert agents generate outputs with the final output chosen by majority vote.
 - *...*
 
+Some of the implemented MAS architectures are illustrated below:
+
+<p align="center">
+  <img src="assets/architecture_diagram.png" alt="MAS architecture diagram" width="700" />
+</p>
+
+
 
 ## Design Philosophy
 
@@ -81,6 +88,7 @@ Run one of the demos at:
 
 - examples/
 
+You also need to register for API access with at least one LLM provider (e.g. [Anthropic](https://platform.claude.com/docs/en/api/overview#getting-api-keys), [Google Gemini](https://ai.google.dev/gemini-api/docs/api-key) or [OpenAI](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)) and either load your API keys into the environment or specify them directly in the code.
 
 ## Roadmap
 
