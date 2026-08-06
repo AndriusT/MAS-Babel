@@ -53,6 +53,7 @@ class TopologyAgent:
         judge_model_client=None,
         execute_code: bool = False,
         work_dir: str = "code_workspace",
+        max_rounds: int = 3,
     ):
         if topology not in VALID_TOPOLOGIES:
             raise ValueError(
@@ -71,6 +72,7 @@ class TopologyAgent:
         self.judge_model_client = judge_model_client or model_client
         self.execute_code = execute_code
         self.work_dir = work_dir
+        self.max_rounds = max_rounds
 
         if log_dir is not None:
             os.makedirs(log_dir, exist_ok=True)
@@ -137,6 +139,7 @@ class TopologyAgent:
         elif self.topology == "self_reflection":
             result = await run_self_reflection(
                 context, self.model_client, effective_system, p.reflection_prompt,
+                max_rounds=self.max_rounds,
                 execute_code=self.execute_code, work_dir=self.work_dir,
             )
         else:
