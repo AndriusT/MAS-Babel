@@ -2,3 +2,4 @@ examples/data/*
 !examples/data/.gitkeep
 logs/*
 examples/logs/*
+src/mas_topologies/__pycache__/

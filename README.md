@@ -1,21 +1,41 @@
-<table>
-<tr>
-<td width="240" valign="top">
-  <img src="assets/MAS-babel-logo.png" alt="MAS Topologies Designer logo" width="200">
-</td>
-<td valign="top">
+<p align="center">
+  <img src="assets/MAS-babel-logo.png"
+       alt="MAS-Babel logo"
+       width="220">
+</p>
+
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg"
+         alt="License: MIT">
+  </a>
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/python-3.10%2C%203.11%2C%203.12-blue.svg"
+         alt="Python versions">
+  </a>
+  <a href="https://github.com/AndriusT/MAS-Babel/stargazers">
+    <img src="https://img.shields.io/github/stars/AndriusT/MAS-Babel?style=flat"
+         alt="GitHub stars">
+  </a>
+  <a href="https://github.com/AndriusT/MAS-Babel/network/members">
+    <img src="https://img.shields.io/github/forks/AndriusT/MAS-Babel?style=flat"
+         alt="GitHub forks">
+  </a>
+  <a href="https://github.com/AndriusT/MAS-Babel/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/AndriusT/MAS-Babel"
+         alt="Contributors">
+  </a>
+</p>
 
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python versions](https://img.shields.io/badge/python-3.10%2C%203.11%2C%203.12-blue.svg)](https://www.python.org/)
+<h1 align="center">MAS-Babel</h1>
 
-# MAS-Babel
+<p align="center">
 
 Multi-agent system (MAS) Babel is a tool for designing multi-agent architectures and orchestration patterns (sometimes referred to as *topologies*) for scientific applications. It helps you compose agent roles (e.g., *designer*, *critic*, *adversary*, *judge*, *self-critic* etc.), run topology-driven reasoning loops, and compare coordination patterns in a reproducible way. The main goal of MAS-Babel is an AutoGen-powered library of widely used multi-agent architectures that can be tested, bechmarked and further assembled into custom MAS pipelines for science applications.
+</p>
 
-</td>
-</tr>
-</table>
+
 
 ## Implemented MAS Architectures
 
