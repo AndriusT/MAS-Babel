@@ -1,31 +1,20 @@
-<p align="center">
-  <img src="assets/MAS-babel-logo.png"
-       alt="MAS-Babel logo"
-       width="220">
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://opensource.org/licenses/MIT">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg"
-         alt="License: MIT">
-  </a>
-  <a href="https://www.python.org/">
-    <img src="https://img.shields.io/badge/python-3.10%2C%203.11%2C%203.12-blue.svg"
-         alt="Python versions">
-  </a>
-  <a href="https://github.com/AndriusT/MAS-Babel/stargazers">
-    <img src="https://img.shields.io/github/stars/AndriusT/MAS-Babel?style=flat"
-         alt="GitHub stars">
-  </a>
-  <a href="https://github.com/AndriusT/MAS-Babel/network/members">
-    <img src="https://img.shields.io/github/forks/AndriusT/MAS-Babel?style=flat"
-         alt="GitHub forks">
-  </a>
-  <a href="https://github.com/AndriusT/MAS-Babel/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/AndriusT/MAS-Babel"
-         alt="Contributors">
-  </a>
-</p>
+<img src="assets/MAS-babel-logo.png"
+     alt="MAS-Babel logo"
+     width="220">
+
+</div>
+
+<div align="center">
+
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+<a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10%2C%203.11%2C%203.12-blue.svg" alt="Python versions"></a>
+<a href="https://github.com/AndriusT/MAS-Babel/stargazers"><img src="https://img.shields.io/github/stars/AndriusT/MAS-Babel?style=flat" alt="GitHub stars"></a>
+<a href="https://github.com/AndriusT/MAS-Babel/network/members"><img src="https://img.shields.io/github/forks/AndriusT/MAS-Babel?style=flat" alt="GitHub forks"></a>
+<a href="https://github.com/AndriusT/MAS-Babel/graphs/contributors"><img src="https://img.shields.io/github/contributors/AndriusT/MAS-Babel" alt="Contributors"></a>
+
+</div>
 
 
 <h1 align="center">MAS-Babel</h1>
