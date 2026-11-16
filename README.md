@@ -42,10 +42,10 @@ In progress:
 - **Planner-executor(s)**: a multi-agent system witha *planner* agent decompsing a task into subtasks with a single or multiple *executors* then executing the assigned tasks. 
 - *...*
 
-Some of the implemented MAS architectures are illustrated below:
+The implemented MAS architectures are illustrated below:
 
 <p align="center">
-  <img src="assets/architecture_diagram.png" alt="MAS architecture diagram" width="700" />
+  <img src="assets/architecture_diagram.png" alt="Diagram of the six implemented MAS topologies: single agent, self-reflection, peer review, adversarial, parallel ensemble and debate" width="750" />
 </p>
 
 
