@@ -35,11 +35,11 @@ Currently implemented:
 - **peer_review**: a two-agent system, where the *architect* generates an output and the *reviewer* provides feedback. 
 - **adversarial**: a two-agent system, where the *architect* generates an output, which is then challenged by an *ardversary* agent for N rounds until a satisfactory output is generated.
 - **parallel_ensemble**: multiple expert agents work in parallel, with the *judge* agent revieving and synthesising the final output.
+- **debate**: several agents answer independently, then read each other's latest answers and revise over a few rounds, stopping early once they agree. The final answer is chosen by majority vote or by a *judge*. With a single round this is *self-consistency* (a majority vote over independent answers), a standard baseline at matched compute.
 
 In progress: 
 
 - **Planner-executor(s)**: a multi-agent system witha *planner* agent decompsing a task into subtasks with a single or multiple *executors* then executing the assigned tasks. 
-- **Agent ensemble**: multiple expert agents generate outputs with the final output chosen by majority vote.
 - *...*
 
 Some of the implemented MAS architectures are illustrated below:
@@ -98,6 +98,63 @@ Run one of the demos at:
 - examples/
 
 You also need to register for API access with at least one LLM provider (e.g. [Anthropic](https://platform.claude.com/docs/en/api/overview#getting-api-keys), [Google Gemini](https://ai.google.dev/gemini-api/docs/api-key) or [OpenAI](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key)) and either load your API keys into the environment or specify them directly in the code.
+
+## Usage
+
+A run needs a model client (any AutoGen chat-completion client), a `PromptSet` and a task string:
+
+```python
+import asyncio
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from mas_topologies import PromptSet, TopologyAgent
+
+generator = OpenAIChatCompletionClient(model="gpt-4o")
+critic = OpenAIChatCompletionClient(model="gpt-4o-mini")
+
+agent = TopologyAgent(
+    model_client=generator,           # the generator (architect / experts)
+    critic_model_client=critic,       # optional: a different model for the reviewer
+    topology="peer_review",
+    prompts=PromptSet(system_message="You are an expert physicist."),
+    max_rounds=3,
+    log_dir="logs",
+)
+result = asyncio.run(agent.run("Derive the period of a simple pendulum."))
+print(result.final_answer, result.final_answer_tagged)
+```
+
+**Prompts.** Only `system_message` is required. Every other role (critic, adversary, judge, self-reflection, the judge's task text, the revision request and the debate prompt) has a domain-neutral default that you can override. `mas_topologies.tasks.ml_architect.ML_PROMPT_SET` is a complete example for ML architecture design.
+
+**Models per role.** `model_client` drives the generator. `critic_model_client` (peer review), `adversary_model_client` (adversarial) and `judge_model_client` (parallel ensemble) each fall back to `model_client`, so you can pair different models, e.g. one model proposing and another critiquing. `expert_model_clients` (a list) gives the parallel experts or debaters different models: agent *i* uses entry *i*, cycling through the list if there are more agents than models.
+
+**Round limits.** `max_rounds` is the maximum number of generator turns (proposals and revisions) in `peer_review`, `adversarial`, `self_reflection` and `debate` (turns per debater). If you leave it unset, the defaults are 4, 4, 3 and 3.
+
+**Debate and voting.** `topology="debate"` uses `n_experts` debaters (default 3).
+- From round 2, each debater sees the other debaters' latest answers (`PromptSet.debate_prompt`) and revises its own.
+- The run stops early once all debaters' final answers agree. Set `stop_on_consensus=False` to always use every round.
+- `aggregation="vote"` (the default) picks the majority answer, with ties going to the earliest debater. `aggregation="judge"` lets a judge synthesise the final answer instead, for code or free-form answers where exact voting makes no sense.
+- Answers are compared with `normalize_answer`, which treats e.g. `80`, `80.0`, `$80$`, `\boxed{80}` and `80 km/h` as equal. Pass your own `answer_normalizer`, e.g. for symbolic equivalence.
+- `max_rounds=1` gives self-consistency: independent answers plus a majority vote.
+- `result.info` records the votes, any tie, the consensus round and each round's answers.
+
+**When a run stops early.** Critic roles end each message with `VERDICT: APPROVE` or `VERDICT: REVISE`. This instruction is appended to their prompts automatically (`PromptSet.verdict_hint`). Only an `APPROVE` from the critic itself stops a run. The generator mentioning "approved" does not, and neither does text in the task.
+
+**The final answer.** The generator (or the judge, in `parallel_ensemble`) is asked to mark its answer with `FINAL ANSWER:` (`PromptSet.final_answer_hint`). The answer is taken from the run's final message: the last generator message, or the judge's synthesis.
+- `result.final_answer` is the text after the tag.
+- If the tag is missing, `final_answer` is the whole final message and `result.final_answer_tagged` is `False`, so format failures can be counted rather than lost.
+- `result.response_text` holds the full final message, and `result.messages` the whole conversation.
+- To use a different answer format, pass your own `answer_extractor`.
+
+**Code execution.** With `execute_code=True`, a `CodeRunner` agent executes the generator's Python blocks; code that a critic quotes is never executed. Single-agent and ensemble runs end when the generator says `DONE`, after any code in that message has run. The `DONE` message must contain the final answer. In `debate`, each debater's code is run after every round. In the next round, each debater sees its own execution output and the other debaters' answers together with their outputs. With `aggregation="judge"`, the judge also sees each final proposal's output.
+
+**Token usage.** `result.usage` holds the run's token counts: `prompt_tokens`, `completion_tokens` and the number of model `calls`, in total and per role (`by_source`). Every model-generated message also carries its own token counts. Use these to compare topologies at matched compute.
+
+**Logs.** With `log_dir` set, each run is appended as one JSON line, containing:
+- every message, with its round number and token counts;
+- the critics' `approved` flags;
+- `final_answer` and `final_answer_tagged`;
+- `usage` (as above) and `info` (topology-specific details, e.g. a debate's votes);
+- any `metadata` you pass to `run()`. For model comparisons, include the model used for each role here.
 
 ## Roadmap
 

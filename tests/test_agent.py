@@ -151,7 +151,10 @@ class TestDispatch:
             return_value=MOCK_RESULT,
         ) as m:
             await agent.run(CONTEXT)
-        assert m.call_args.args[2] == MOCK_PROMPT_SET.system_message
+        # The FINAL ANSWER instruction is appended to the generator's prompt
+        assert m.call_args.args[2] == (
+            MOCK_PROMPT_SET.system_message + "\n\n" + MOCK_PROMPT_SET.final_answer_hint
+        )
 
     async def test_critic_message_forwarded_to_peer_review(self):
         agent = _agent(topology="peer_review")

@@ -33,11 +33,18 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 import sys
-sys.path.insert(0, "/home/axt807/AutoGen/mas_topologies_designer/src")
+# Make src/ importable without `pip install -e .` (works from any working directory)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from mas_topologies import TopologyAgent, PromptSet
+from mas_topologies.protocol import is_approval
 from mas_topologies.tasks.ml_architect.models import DesignInput
 from mas_topologies.tasks.ml_architect.context import prepare_context, parse_response
+from mas_topologies.tasks.ml_architect.prompts import (
+    FINAL_ANSWER_HINT,
+    JUDGE_TASK_TEMPLATE,
+    REVISION_PROMPT,
+)
 
 # Build fence so literal ``` never appears in this source file (used in prompts)
 _F = chr(96) * 3
@@ -161,11 +168,11 @@ CRITIC_PROMPT = (
     "9. Regularisation — is it adequate given the dataset size?\n"
     "10. Hyperparameter plausibility — are values in sane ranges?\n\n"
     "=== OUTPUT RULES ===\n"
-    "If ALL checks pass: respond with exactly APPROVED.\n"
-    "Otherwise: list only the specific issues found, one per line, prefixed with the check number.\n"
-    "Do not rewrite the architecture. End with:\n"
-    "Please provide your COMPLETE revised response, including the full Analysis, Python code block, "
-    "and JSON hyperparameters block."
+    "If ALL checks pass: say so briefly.\n"
+    "Otherwise: list only the specific issues found, one per line, prefixed with the check number,\n"
+    "and ask for the COMPLETE revised response, including the full Analysis, Python code block, "
+    "and JSON hyperparameters block. Do not rewrite the architecture.\n"
+    "End with exactly one final line: 'VERDICT: APPROVE' if ALL checks pass, or 'VERDICT: REVISE'."
 )
 
 ADVERSARY_PROMPT = (
@@ -182,11 +189,12 @@ ADVERSARY_PROMPT = (
     "4. Hyperparameters — truly optimal for this dataset?\n"
     "5. Computational efficiency — could a simpler design work just as well?\n\n"
     "=== OUTPUT RULES ===\n"
-    "Start with: CHALLENGE: [main objection]\n"
-    "List 3–5 specific challenge points as bullet points.\n"
-    "End with: Please provide your COMPLETE revised response, including full Analysis, "
-    "Python code block, and JSON hyperparameters.\n"
-    "Never respond with APPROVED."
+    "When challenging, start with: CHALLENGE: [main objection]\n"
+    "List 3–5 specific challenge points as bullet points, and ask for the COMPLETE revised "
+    "response, including full Analysis, Python code block, and JSON hyperparameters.\n"
+    "Keep challenging while substantive objections remain; approve once they are addressed.\n"
+    "End with exactly one final line: 'VERDICT: APPROVE' if you have no substantive objections "
+    "left, or 'VERDICT: REVISE'."
 )
 
 JUDGE_PROMPT = (
@@ -227,8 +235,9 @@ REFLECTION_PROMPT = (
     "12. Spatial dimensions valid after all pooling ops (>1×1)?\n"
     "13. Regularisation adequate given dataset size?\n"
     "14. Hyperparameter values in sane ranges?\n\n"
-    "If ALL checks pass: respond with exactly REFLECTION_COMPLETE.\n"
-    "Otherwise: list only the issues found, one per line, prefixed with check number."
+    "If ALL checks pass: say so briefly.\n"
+    "Otherwise: list only the issues found, one per line, prefixed with check number.\n"
+    "End with exactly one final line: 'VERDICT: APPROVE' if ALL checks pass, or 'VERDICT: REVISE'."
 )
 
 # Assemble into a PromptSet — the generic contract TopologyAgent understands
@@ -238,6 +247,11 @@ PROMPT_SET = PromptSet(
     adversary_message=ADVERSARY_PROMPT,
     judge_message=JUDGE_PROMPT,
     reflection_prompt=REFLECTION_PROMPT,
+    # ML-specific: the judge's task text, the self-reflection revision request
+    # (full Analysis + code + JSON), and 'FINAL ANSWER:' goes before the code block
+    judge_task_template=JUDGE_TASK_TEMPLATE,
+    revision_prompt=REVISION_PROMPT,
+    final_answer_hint=FINAL_ANSWER_HINT,
 )
 
 # ---------------------------------------------------------------------------
@@ -253,7 +267,7 @@ CIFAR10_INPUT = DesignInput(
     ),
     num_classes=10,
     input_shape=(32, 32, 3),
-    dataset_size=60_000,
+    dataset_size=50_000,         # training samples (the 50k of the 50k / 10k split)
     framework="PyTorch",
 )
 
@@ -279,13 +293,24 @@ def _build_client(provider: str):
         ), f"openai/{model}"
 
     if provider in ("anthropic", "auto") and os.environ.get("ANTHROPIC_API_KEY"):
-        from autogen_ext.models.anthropic import AnthropicChatCompletionClient
-        model = os.environ.get("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022")
-        return AnthropicChatCompletionClient(
-            model=model, api_key=os.environ["ANTHROPIC_API_KEY"]
+        from autogen_ext.models.openai import OpenAIChatCompletionClient
+        model = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+        # Claude through Anthropic's OpenAI-compatible endpoint: works with the base install
+        # (the native AnthropicChatCompletionClient needs `pip install "autogen-ext[anthropic]"`)
+        return OpenAIChatCompletionClient(
+            model=model,
+            api_key=os.environ["ANTHROPIC_API_KEY"],
+            include_name_in_message=False,
+            model_info=_CLAUDE_MODEL_INFO,
         ), f"anthropic/{model}"
 
     return None, None
+
+
+# Capabilities for Claude models (AutoGen's built-in model list does not know the newest names)
+_CLAUDE_MODEL_INFO = {"vision": False, "function_calling": True, "json_output": True,
+                      "family": "unknown", "structured_output": True,
+                      "multiple_system_messages": False}
 
 # ---------------------------------------------------------------------------
 # Dry-run mock helpers
@@ -302,6 +327,7 @@ _MOCK_RESPONSE = (
     "## Architecture Proposal\n\n"
     "A compact ResNet-style network with three residual blocks (64, 128, 256 "
     "channels), global average pooling, and a single fully-connected head.\n\n"
+    "FINAL ANSWER:\n"
     f"```json\n{_MOCK_JSON}\n```\n"
 )
 
@@ -346,8 +372,12 @@ async def run_topology(topology: str, model_client, log_dir: str, dry_run: bool 
         result = await agent.run(context, metadata=metadata)
 
     output = parse_response(result.response_text, CIFAR10_INPUT)
+    approved = any(m["source"] in ("Reviewer", "Adversary", "Reflection") and is_approval(m["content"])
+                   for m in result.messages)
 
-    print(f"\nOptimizer      : {output.hyperparameters.get('optimizer', 'N/A')}")
+    print(f"\nRounds used    : {result.rounds_used}   (approved early: {approved})")
+    print(f"FINAL ANSWER   : {'tagged' if result.final_answer_tagged else 'tag missing (whole message used)'}")
+    print(f"Optimizer      : {output.hyperparameters.get('optimizer', 'N/A')}")
     print(f"Learning rate  : {output.hyperparameters.get('learning_rate', 'N/A')}")
     print(f"Batch size     : {output.hyperparameters.get('batch_size', 'N/A')}")
     print(f"Epochs         : {output.hyperparameters.get('epochs', 'N/A')}")
@@ -375,6 +405,11 @@ async def main():
         default="all",
         help="Topology to run (default: all)",
     )
+    parser.add_argument(
+        "--log-dir",
+        default=str(Path(__file__).resolve().parent / "logs"),
+        help="Directory for the JSONL session logs (default: examples/logs)",
+    )
     args = parser.parse_args()
 
     model_client, provider_label = _build_client(args.provider)
@@ -388,7 +423,7 @@ async def main():
 
     topologies = ALL_TOPOLOGIES if args.topology == "all" else [args.topology]
 
-    log_dir = Path("examples/logs")
+    log_dir = Path(args.log_dir)   # default examples/logs, from any working directory
     log_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\nmas_topologies — ML Architecture Design Demo")

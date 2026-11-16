@@ -2,4 +2,11 @@ examples/data/*
 !examples/data/.gitkeep
 logs/*
 examples/logs/*
-src/mas_topologies/__pycache__/
+
+# Python / test caches (anywhere in the repo)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Scripts written by the CodeRunner agent (execute_code=True)
+code_workspace/

@@ -7,7 +7,8 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_agentchat.ui import Console
 
 from ..models import TopologyResult
-from ._executor import make_code_executor_agent
+from ._executor import DoneTermination, make_code_executor_agent
+from ._messages import collect_messages, message_dict
 
 
 async def run(
@@ -23,7 +24,7 @@ async def run(
     When *execute_code* is ``True`` a :class:`CodeExecutorAgent` is added to the
     group chat so the agent can write and run Python code, see the output, and
     refine its answer.  The conversation terminates when the agent says ``DONE``
-    or after 10 messages.
+    (after running any code in that same message) or after 10 messages.
 
     When *execute_code* is ``False`` (default) the existing fast single-call
     path is used unchanged.
@@ -35,8 +36,8 @@ async def run(
     )
 
     if execute_code:
-        agents = [agent, make_code_executor_agent(work_dir)]
-        termination = TextMentionTermination("DONE") | MaxMessageTermination(10)
+        agents = [agent, make_code_executor_agent(work_dir, sources=["Architect"])]
+        termination = DoneTermination("Architect") | MaxMessageTermination(10)
         team = RoundRobinGroupChat(agents, termination_condition=termination)
         if interactive:
             result = await Console(team.run_stream(task=context))
@@ -44,7 +45,7 @@ async def run(
             result = await team.run(task=context)
         arch_msgs = [m for m in result.messages if m.source == "Architect"]
         text = arch_msgs[-1].content if arch_msgs else result.messages[-1].content
-        messages = [{"source": m.source, "content": m.content} for m in result.messages]
+        messages = collect_messages(result.messages)
         rounds_used = len(arch_msgs)
     elif interactive:
         termination = TextMentionTermination("APPROVED")
@@ -52,7 +53,7 @@ async def run(
         result = await Console(team.run_stream(task=context))
         arch_msgs = [m for m in result.messages if m.source == "Architect"]
         text = arch_msgs[-1].content if arch_msgs else result.messages[-1].content
-        messages = [{"source": "Architect", "content": text}]
+        messages = [message_dict(arch_msgs[-1])] if arch_msgs else [{"source": "Architect", "content": text}]
         rounds_used = 1
     else:
         response = await agent.on_messages(
@@ -61,7 +62,7 @@ async def run(
         )
         text = response.chat_message.content
         print(text)
-        messages = [{"source": "Architect", "content": text}]
+        messages = [message_dict(response.chat_message)]
         rounds_used = 1
 
     return TopologyResult(

@@ -1,12 +1,14 @@
-"""Adversarial topology: Architect proposes, Adversary challenges. Max 4 rounds."""
+"""Adversarial topology: Architect proposes, Adversary challenges. Default max 4 rounds."""
 
 from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
+from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_agentchat.teams import RoundRobinGroupChat
 
 from ..models import TopologyResult
 from ..prompts import ADVERSARIAL_CRITIC_SYSTEM_MESSAGE as _DEFAULT_ADVERSARY
+from ..protocol import VERDICT_INSTRUCTION, approval_termination, with_verdict_instruction
 from ._executor import make_code_executor_agent
+from ._messages import collect_messages
 
 
 async def run(
@@ -16,14 +18,21 @@ async def run(
     adversary_message: str = _DEFAULT_ADVERSARY,
     execute_code: bool = False,
     work_dir: str = "code_workspace",
+    max_rounds: int = 4,
+    verdict_instruction: str = VERDICT_INSTRUCTION,
+    adversary_model_client=None,
 ) -> TopologyResult:
-    """Architect proposes, Adversary challenges. Max 4 rounds.
+    """Architect proposes, Adversary challenges.
 
-    Terminates when Adversary responds with ``ACCEPTED``
-    or after 8 messages (4 full rounds).  When *execute_code* is ``True`` a
-    :class:`CodeExecutorAgent` is inserted between Architect and Adversary so
-    the Adversary can challenge the architect based on real execution output.
-    MaxMessages is raised to 12 to account for the extra CodeRunner turns.
+    Terminates when the Adversary's own message ends with ``VERDICT: APPROVE``
+    (it has no substantive objections left) or after the Architect has spoken
+    *max_rounds* times.  *verdict_instruction* is appended to the Adversary's
+    prompt unless it already asks for a verdict.  When *execute_code* is
+    ``True`` a :class:`CodeExecutorAgent` is inserted between Architect and
+    Adversary so the Adversary can challenge based on real execution output.
+
+    *adversary_model_client* drives the Adversary; it falls back to
+    *model_client* (which always drives the Architect) when ``None``.
     """
     architect = AssistantAgent(
         name="Architect",
@@ -32,42 +41,34 @@ async def run(
     )
     adversary = AssistantAgent(
         name="Adversary",
-        model_client=model_client,
-        system_message=adversary_message,
+        model_client=adversary_model_client or model_client,
+        system_message=with_verdict_instruction(adversary_message, verdict_instruction),
     )
 
     if execute_code:
-        agents = [architect, make_code_executor_agent(work_dir), adversary]
-        max_msgs = 12   # 3 agents × 4 rounds
+        # Only the Architect's code is executed, never code the Adversary quotes
+        agents = [architect, make_code_executor_agent(work_dir, sources=["Architect"]), adversary]
     else:
         agents = [architect, adversary]
-        max_msgs = 8    # 2 agents × 4 rounds
+    # The task message counts towards MaxMessageTermination, so this cap lets
+    # the Architect speak exactly max_rounds times.
+    max_msgs = len(agents) * max_rounds
 
-    termination = TextMentionTermination("ACCEPTED") | MaxMessageTermination(max_msgs)
+    termination = approval_termination("Adversary") | MaxMessageTermination(max_msgs)
     team = RoundRobinGroupChat(agents, termination_condition=termination)
     result = await team.run(task=context)
 
     round_num = 0
-    messages = []
-    for msg in result.messages:
-        if msg.source == "Architect":
+    messages = collect_messages(result.messages)
+    for m in messages:
+        if m["source"] == "Architect":
             round_num += 1
-            print(f"\n--- Architect (round {round_num}) ---")
-            print(msg.content)
-            messages.append({"source": "Architect", "content": msg.content})
-        elif msg.source == "Adversary":
-            print(f"\n--- Adversary (round {round_num}) ---")
-            print(msg.content)
-            messages.append({"source": "Adversary", "content": msg.content})
+        print(f"\n--- {m['source']} (round {round_num}) ---")
+        print(m["content"])
 
+    # The final answer is the Architect's last word (its latest revision)
     arch_msgs = [m for m in messages if m["source"] == "Architect"]
-    final_text = None
-    for m in reversed(arch_msgs):
-        if "```json" in m["content"]:
-            final_text = m["content"]
-            break
-    if final_text is None:
-        final_text = arch_msgs[-1]["content"] if arch_msgs else messages[-1]["content"]
+    final_text = arch_msgs[-1]["content"] if arch_msgs else ""
 
     return TopologyResult(
         response_text=final_text,

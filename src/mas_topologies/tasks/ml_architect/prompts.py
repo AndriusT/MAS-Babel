@@ -321,12 +321,14 @@ CRITIC_SYSTEM_MESSAGE = (
     "Flag: learning_rate > 0.05 with Adam/AdamW, batch_size larger than dataset_size, "
     "epochs < 5 or epochs > 300 without a learning rate schedule or early stopping.\n\n"
     "=== OUTPUT RULES ===\n"
-    "If ALL checks in BOTH sections pass, respond with exactly: APPROVED\n"
+    "If ALL checks in BOTH sections pass, say so briefly.\n"
     "Otherwise list only the specific issues found, one per line, prefixed with the check number "
     "(e.g. '7: spatial dims reduce to 2x2 after 3 pooling layers on a 16x16 input'). "
     "Be concise. Do not rewrite the architecture — only report issues for the Architect to fix.\n"
-    "End your feedback message with this exact line:\n"
-    "Please provide your COMPLETE revised response, including the full Analysis, Python code block, and JSON hyperparameters block."
+    "When you list issues, ask the Architect for the COMPLETE revised response, including the full "
+    "Analysis, Python code block, and JSON hyperparameters block.\n"
+    "End your message with exactly one final line: 'VERDICT: APPROVE' if ALL checks pass, "
+    "or 'VERDICT: REVISE' otherwise."
 )
 
 ADVERSARIAL_CRITIC_SYSTEM_MESSAGE = (
@@ -341,19 +343,22 @@ ADVERSARIAL_CRITIC_SYSTEM_MESSAGE = (
     "Probe hyperparameters: Are these really optimal for this dataset? What about extreme values?\n"
     "Highlight risks: Overfitting? Underfitting? Computational concerns?\n\n"
     "=== FOCUS AREAS FOR CHALLENGE ===\n"
-    "1. **Architecture depth/width**: Is it overkill or underpowered for 1200 samples? Can you justify it?\n"
+    "1. **Architecture depth/width**: Is it overkill or underpowered for the dataset size given in the task? Can you justify it?\n"
     "2. **Pooling strategy**: Are you pooling too aggressively and losing information?\n"
     "3. **Regularization**: Is dropout sufficient? Should you try weight decay, early stopping, or data aug?\n"
     "4. **Hyperparameter choices**: Learning rate, batch size, epochs — are these truly optimal?\n"
-    "5. **Task fit**: Does your architecture match the known properties of MNIST-like tasks?\n"
+    "5. **Task fit**: Does your architecture match the known properties of the data and task described?\n"
     "6. **Computational efficiency**: Is there a simpler design that would work just as well?\n\n"
     "=== OUTPUT RULES ===\n"
     "Respond with structured adversarial feedback:\n"
-    "- Start with: CHALLENGE: [main objection or alternative suggestion]\n"
+    "- When challenging, start with: CHALLENGE: [main objection or alternative suggestion]\n"
     "- List 3-5 specific points questioning the design (use bullet points, not numbered)\n"
-    "- End with: Please provide your COMPLETE revised response, including full Analysis, Python code block, and JSON hyperparameters.\n"
-    "Never respond with APPROVED. Your goal is to provoke thoughtful revision, not to pass/fail the design.\n"
-    "Be respectful but critical. Point out real issues, not nitpicks."
+    "- Ask for the COMPLETE revised response, including full Analysis, Python code block, and JSON hyperparameters.\n"
+    "Your goal is to provoke thoughtful revision. Keep challenging while you have substantive objections; "
+    "approve only once the Architect has convincingly addressed them.\n"
+    "Be respectful but critical. Point out real issues, not nitpicks.\n"
+    "End your message with exactly one final line: 'VERDICT: APPROVE' if you have no substantive "
+    "objections left, or 'VERDICT: REVISE' otherwise."
 )
 
 JUDGE_SYSTEM_MESSAGE = (
@@ -404,9 +409,42 @@ REFLECTION_PROMPT = (
     "13. Is regularization adequate given the dataset size?\n"
     "14. Are hyperparameter values in sane ranges?\n"
     "15. Is the architecture style appropriate for the task (e.g. convolutional layers for image data)?\n\n"
-    "If ALL checks pass, respond with exactly: REFLECTION_COMPLETE\n"
+    "If ALL checks pass, say so briefly.\n"
     "Otherwise, list only the issues found (one per line, prefixed with check number). "
-    "Be concise. Do NOT rewrite the architecture here."
+    "Be concise. Do NOT rewrite the architecture here.\n"
+    "End your message with exactly one final line: 'VERDICT: APPROVE' if ALL checks pass, "
+    "or 'VERDICT: REVISE' otherwise."
+)
+
+# Judge's task for parallel_ensemble ({context}, {n}, {proposals} are filled in)
+JUDGE_TASK_TEMPLATE = (
+    "## ORIGINAL TASK\n{context}\n\n"
+    "## PROPOSALS FROM {n} ARCHITECTS\n\n{proposals}"
+    "## YOUR TASK\n"
+    "Analyze these {n} proposals. Compare them on code correctness, architecture trade-offs,\n"
+    "capacity fit, regularization, hyperparameters, and task alignment.\n\n"
+    "Then synthesize ONE final proposal by either:\n"
+    "- Selecting the best single proposal, OR\n"
+    "- Combining the strongest ideas from multiple proposals\n\n"
+    "Your output MUST be a complete, synthesized architecture with:\n"
+    "1. Comparative Analysis section\n"
+    "2. Complete Python code block with create_model(input_shape, num_classes)\n"
+    "3. JSON hyperparameters block\n\n"
+    "Output ONLY the final proposal — no explanations outside the three sections above.\n"
+)
+
+# Asked after each reflection in self_reflection
+REVISION_PROMPT = (
+    "Based on your reflection above, provide your COMPLETE revised response "
+    "(full Analysis Section, Python code block, and JSON hyperparameters block)."
+)
+
+# The ML answer *is* the code and hyperparameters, so the tag goes before them
+# (no duplication, and nothing like "FINAL ANSWER: see above").
+FINAL_ANSWER_HINT = (
+    "Write the line 'FINAL ANSWER:' on its own line immediately before your Python code block. "
+    "Everything after it — the Python code block and the JSON hyperparameters block — is your "
+    "final answer, so put both blocks after this line, complete."
 )
 
 # Pre-assembled PromptSet for the ML architecture design task.
@@ -417,6 +455,9 @@ ML_PROMPT_SET = PromptSet(
     adversary_message=ADVERSARIAL_CRITIC_SYSTEM_MESSAGE,
     judge_message=JUDGE_SYSTEM_MESSAGE,
     reflection_prompt=REFLECTION_PROMPT,
+    judge_task_template=JUDGE_TASK_TEMPLATE,
+    revision_prompt=REVISION_PROMPT,
+    final_answer_hint=FINAL_ANSWER_HINT,
 )
 
 __all__ = [
@@ -426,4 +467,7 @@ __all__ = [
     "ADVERSARIAL_CRITIC_SYSTEM_MESSAGE",
     "JUDGE_SYSTEM_MESSAGE",
     "REFLECTION_PROMPT",
+    "JUDGE_TASK_TEMPLATE",
+    "REVISION_PROMPT",
+    "FINAL_ANSWER_HINT",
 ]

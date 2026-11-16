@@ -138,16 +138,16 @@ class TestLogSession:
         assert arch_msgs[0]["round"] == 1
         assert arch_msgs[1]["round"] == 2
 
-    def test_unknown_sources_not_included_in_messages(self, tmp_path):
-        """Messages from sources other than Architect/Reviewer/Adversary/Judge are skipped."""
+    def test_other_sources_included_in_messages(self, tmp_path):
+        """Messages from any source (CodeRunner, Reflection, ...) are logged."""
         log_path = str(tmp_path / "log.jsonl")
         msgs = [
             {"source": "Architect", "content": "design"},
-            {"source": "UnknownAgent", "content": "noise"},
+            {"source": "CodeRunner", "content": "output"},
         ]
         log_session(log_path, "single", _result(msgs))
         entry = json.loads(open(log_path).read())
         sources = [m["source"] for m in entry["messages"]]
-        assert "UnknownAgent" not in sources
-        assert "Architect" in sources
+        assert sources == ["Architect", "CodeRunner"]
+        assert entry["messages"][1]["round"] == 1
 
